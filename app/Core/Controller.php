@@ -26,6 +26,28 @@ abstract class Controller
                 'role'     => is_string($_SESSION['role'] ?? null) ? $_SESSION['role'] : null,
             ] : null,
             'isLoggedIn' => isset($_SESSION['user_id']),
+            'batchStatusMap' => [
+                'new' => [
+                    'label' => 'Mới tạo',
+                    'badgeClass' => 'bg-info text-dark',
+                ],
+                'pending_qc' => [
+                    'label' => 'Chờ QC',
+                    'badgeClass' => 'bg-warning text-dark',
+                ],
+                'in_progress' => [
+                    'label' => 'Đang QC',
+                    'badgeClass' => 'bg-primary',
+                ],
+                'completed' => [
+                    'label' => 'Hoàn tất',
+                    'badgeClass' => 'bg-success',
+                ],
+                'rejected' => [
+                    'label' => 'Từ chối',
+                    'badgeClass' => 'bg-danger',
+                ],
+            ],
         ];
 
         extract(array_merge($shared, $data), EXTR_SKIP);

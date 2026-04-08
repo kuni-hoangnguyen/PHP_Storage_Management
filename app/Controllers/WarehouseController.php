@@ -76,20 +76,42 @@ final class WarehouseController extends Controller
         JOIN product_types p ON b.product_type = p.product_code
         WHERE b.batch_code = :batch_code
         LIMIT 1');
+        $boxesStmt = $pdo->prepare(
+            'SELECT *
+            FROM boxes
+            WHERE batch_code = :batch_code
+            ORDER BY box_code ASC');
         $batchStmt->execute(['batch_code' => $batchCode]);
+        $boxesStmt->execute(['batch_code' => $batchCode]);
         $batch = $batchStmt->fetch();
+        $boxes = $boxesStmt->fetchAll();
 
         $this->view('warehouse/box_add', [
             'title'    => 'Add Box to Batch',
             'batch'    => $batch,
             'oldInput' => is_array($oldInput) ? $oldInput : [],
             'error'    => is_string($error) ? $error : null,
+            'boxes'    => $boxes,
         ]);
     }
 
     public function showBatchesList(): void
     {
-        $pdo  = Database::getInstance();
+        $pdo     = Database::getInstance();
+        $perPage = 10;
+        $page    = max(1, (int) ($_GET['page'] ?? '1'));
+        $offset  = ($page - 1) * $perPage;
+
+        $countStmt  = $pdo->query('SELECT COUNT(*) FROM batches');
+        $totalRows  = (int) $countStmt->fetchColumn();
+        $totalPages = max(1, (int) ceil($totalRows / $perPage));
+
+        if ($page > $totalPages) {
+            $page   = $totalPages;
+            $offset = ($page - 1) * $perPage;
+            exit;
+        }
+
         $stmt = $pdo->prepare(
             'SELECT
                 b.batch_code,
@@ -113,14 +135,22 @@ final class WarehouseController extends Controller
                 b.status,
                 s.supplier_name,
                 p.product_name
-            ORDER BY b.import_date DESC;'
+            ORDER BY b.created_at DESC
+            LIMIT :limit OFFSET :offset'
         );
-        $stmt->execute();
+        $stmt->execute([
+            'limit'  => $perPage,
+            'offset' => $offset,
+        ]);
         $batches = $stmt->fetchAll();
 
         $this->view('warehouse/batch_list', [
-            'title'   => 'Batch List',
-            'batches' => $batches,
+            'title'      => 'Batch List',
+            'batches'    => $batches,
+            'page'       => $page,
+            'totalPages' => $totalPages,
+            'totalRows'  => $totalRows,
+            'perPage'    => $perPage,
         ]);
     }
 
@@ -237,25 +267,59 @@ final class WarehouseController extends Controller
 
         $allBoxCodes  = array_column($preparedBoxes, 'box_code');
         $placeholders = implode(', ', array_fill(0, count($allBoxCodes), '?'));
-        $existsStmt   = $pdo->prepare('SELECT box_code FROM boxes WHERE box_code IN (' . $placeholders . ')');
+        $existsStmt   = $pdo->prepare('SELECT box_code, batch_code FROM boxes WHERE box_code IN (' . $placeholders . ')');
         $existsStmt->execute($allBoxCodes);
-        $existingCodes = $existsStmt->fetchAll(\PDO::FETCH_COLUMN);
+        $existingRows = $existsStmt->fetchAll();
 
-        if (is_array($existingCodes) && $existingCodes !== []) {
+        $existingByBoxCode = [];
+        foreach ($existingRows as $existingRow) {
+            $existingKey                       = strtoupper((string) ($existingRow['box_code'] ?? ''));
+            $existingByBoxCode[$existingKey] = (string) ($existingRow['batch_code'] ?? '');
+        }
+
+        $conflictingCodes = [];
+        $insertRows       = [];
+        $updateRows       = [];
+
+        foreach ($preparedBoxes as $row) {
+            $rowKey        = strtoupper((string) $row['box_code']);
+            $existingBatch = $existingByBoxCode[$rowKey] ?? null;
+
+            if ($existingBatch === null) {
+                $insertRows[] = $row;
+                continue;
+            }
+
+            if ($existingBatch !== $batchCode) {
+                $conflictingCodes[] = (string) $row['box_code'];
+                continue;
+            }
+
+            $updateRows[] = $row;
+        }
+
+        if ($conflictingCodes !== []) {
             $this->redirectBackToBoxForm(
                 $batchCode,
                 $_POST,
-                'Mã thùng đã tồn tại: ' . implode(', ', array_map('strval', $existingCodes)) . '.'
+                'Mã thùng đã tồn tại ở lô khác: ' . implode(', ', array_map('strval', $conflictingCodes)) . '.'
             );
         }
 
         $insertStmt = $pdo->prepare(
             'INSERT INTO boxes (batch_code, box_code, total_units, tray_count, unit_per_tray) VALUES (:batch_code, :box_code, :total_units, :tray_count, :unit_per_tray)'
         );
+        $updateStmt = $pdo->prepare(
+            'UPDATE boxes SET total_units = :total_units, tray_count = :tray_count, unit_per_tray = :unit_per_tray WHERE batch_code = :batch_code AND box_code = :box_code'
+        );
 
         $pdo->beginTransaction();
         try {
-            foreach ($preparedBoxes as $row) {
+            foreach ($updateRows as $row) {
+                $updateStmt->execute($row);
+            }
+
+            foreach ($insertRows as $row) {
                 $insertStmt->execute($row);
             }
             $pdo->commit();

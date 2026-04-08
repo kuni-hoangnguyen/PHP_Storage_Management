@@ -39,6 +39,19 @@ body {
     border: none;
 }
 
+.active>.page-link, .page-link.active {
+    background-color: var(--bs-primary);
+    border-color: var(--bs-primary);
+}
+.page-link {
+    color: var(--bs-primary);
+}
+.page-link:hover {
+    color: #0f4f53;
+    background-color: rgba(21, 94, 99, 0.1);
+    border-color: rgba(21, 94, 99, 0.1);
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
     width: 8px;

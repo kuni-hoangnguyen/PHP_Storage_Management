@@ -7,6 +7,10 @@
     <?php if (empty($batch)): ?>
     <div class="alert alert-warning text-center" role="alert">Không tìm thấy lô hàng.</div>
     <?php else: ?>
+        <?php
+            $statusKey = (string) ($batch['status'] ?? '');
+            $statusMeta = $batchStatusMap[$statusKey] ?? ['label' => $statusKey, 'badgeClass' => 'bg-secondary'];
+        ?>
     <div class="card shadow-sm mb-4">
         <div class="card-header bg-primary text-white">
             <h5 class="mb-0">Thông Tin Chung</h5>
@@ -31,7 +35,7 @@
                 </div>
                 <div class="col-md-3">
                     <div class="text-muted small">Trạng thái</div>
-                    <span class="badge bg-secondary"><?php echo htmlspecialchars((string) $batch['status'], ENT_QUOTES, 'UTF-8'); ?></span>
+                    <span class="badge <?php echo htmlspecialchars((string) $statusMeta['badgeClass'], ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars((string) $statusMeta['label'], ENT_QUOTES, 'UTF-8'); ?></span>
                 </div>
                 <div class="col-md-3">
                     <div class="text-muted small">Số thùng</div>
@@ -44,9 +48,14 @@
     <?php if ($batch['status'] === 'new'): ?>
     <div class="alert alert-info d-flex justify-content-between align-items-center mb-4" role="alert">
         <span>Vui lòng kiểm tra kỹ thông tin trước khi xác nhận. Sau khi xác nhận, lô hàng sẽ được chuyển sang QC.</span>
-        <a class="btn btn-success" href="/warehouse/update_status?batch_code=<?php echo urlencode((string) $batch['batch_code']); ?>">
-            <i class="bi bi-check-circle"></i> Xác nhận thông tin
-        </a>
+        <div class="d-flex gap-2">
+            <a class="btn btn-outline-primary" href="/warehouse/box_add?batch_code=<?php echo urlencode((string) $batch['batch_code']); ?>">
+                Chỉnh sửa thùng
+            </a>
+            <a class="btn btn-success" href="/warehouse/update_status?batch_code=<?php echo urlencode((string) $batch['batch_code']); ?>">
+                Xác nhận thông tin
+            </a>
+        </div>
     </div>
     <?php endif; ?>
 

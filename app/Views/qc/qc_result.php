@@ -7,6 +7,10 @@
     <?php if (empty($batch)): ?>
     <div class="alert alert-warning text-center" role="alert">Không tìm thấy kết quả kiểm định.</div>
     <?php else: ?>
+        <?php
+            $statusKey = (string) ($batch['status'] ?? '');
+            $statusMeta = $batchStatusMap[$statusKey] ?? ['label' => $statusKey, 'badgeClass' => 'bg-secondary'];
+        ?>
     <div class="card shadow-sm mb-4">
         <div class="card-header bg-success text-white">
             <h5 class="mb-0">Thông Tin Chung</h5>
@@ -31,7 +35,7 @@
                 </div>
                 <div class="col-md-3">
                     <div class="text-muted small">Trạng thái</div>
-                    <span class="badge bg-secondary"><?php echo htmlspecialchars((string) $batch['status'], ENT_QUOTES, 'UTF-8'); ?></span>
+                    <span class="badge <?php echo htmlspecialchars((string) $statusMeta['badgeClass'], ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars((string) $statusMeta['label'], ENT_QUOTES, 'UTF-8'); ?></span>
                 </div>
                 <div class="col-md-3">
                     <div class="text-muted small">Tổng OK (Đạt)</div>

@@ -21,6 +21,8 @@ return [
         '/qc/result'              => ['QCController', 'viewResult'],
 
         '/manager/index'           => ['ManagerController', 'index'],
+        '/manager/batches'         => ['ManagerController', 'showBatchesList'],
+        '/manager/detail'          => ['ManagerController', 'viewDetail'],
 
         '/admin/index'             => ['AdminController', 'index'],
 

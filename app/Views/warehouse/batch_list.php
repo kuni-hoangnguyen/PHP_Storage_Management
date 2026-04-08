@@ -28,6 +28,10 @@
                 </thead>
                 <tbody>
                     <?php foreach ($batches as $batch): ?>
+                    <?php
+                        $statusKey  = (string) ($batch['status'] ?? '');
+                        $statusMeta = $batchStatusMap[$statusKey] ?? ['label' => $statusKey, 'badgeClass' => 'bg-secondary'];
+                    ?>
                     <tr>
                         <td class="fw-bold text-primary"><?php echo htmlspecialchars((string) $batch['batch_code'], ENT_QUOTES, 'UTF-8'); ?></td>
                         <td><?php echo htmlspecialchars((string) $batch['product_name'], ENT_QUOTES, 'UTF-8'); ?></td>
@@ -36,17 +40,7 @@
                         <td><?php echo htmlspecialchars((string) $batch['box_count'], ENT_QUOTES, 'UTF-8'); ?></td>
                         <td><?php echo htmlspecialchars((string) $batch['total_units'], ENT_QUOTES, 'UTF-8'); ?></td>
                         <td>
-                            <?php 
-                                $statusClass = match($batch['status']) {
-                                    'new' => 'bg-info text-dark',
-                                    'pending_qc' => 'bg-warning text-dark',
-                                    'in_progress' => 'bg-primary',
-                                    'completed' => 'bg-success',
-                                    'rejected' => 'bg-danger',
-                                    default => 'bg-secondary'
-                                };
-                            ?>
-                            <span class="badge <?php echo $statusClass; ?> rounded-pill"><?php echo htmlspecialchars((string) $batch['status'], ENT_QUOTES, 'UTF-8'); ?></span>
+                            <span class="badge <?php echo htmlspecialchars((string) $statusMeta['badgeClass'], ENT_QUOTES, 'UTF-8'); ?> rounded-pill"><?php echo htmlspecialchars((string) $statusMeta['label'], ENT_QUOTES, 'UTF-8'); ?></span>
                         </td>
                         <td class="text-end">
                             <a class="btn btn-sm btn-outline-primary" href="/warehouse/detail?batch_code=<?php echo urlencode((string) $batch['batch_code']); ?>">Chi tiết</a>
@@ -58,4 +52,32 @@
         </div>
     </div>
     <?php endif; ?>
+    <?php if (($totalPages ?? 1) > 1): ?>
+<div class="d-flex justify-content-between align-items-center mt-3">
+    <small class="text-muted">
+        Trang <?php echo (int) $page; ?> / <?php echo (int) $totalPages; ?>
+        (<?php echo (int) $totalRows; ?> bản ghi)
+    </small>
+
+    <nav aria-label="Batch pagination">
+        <ul class="pagination mb-0">
+            <li class="page-item <?php echo($page <= 1) ? 'disabled' : ''; ?>">
+                <a class="page-link" href="/warehouse/batches?page=<?php echo max(1, (int) $page - 1); ?>">Trước</a>
+            </li>
+
+            <?php for ($i = 1; $i <= (int) $totalPages; $i++): ?>
+            <li class="page-item <?php echo($i === (int) $page) ? 'active' : ''; ?>">
+                <a class="page-link" href="/warehouse/batches?page=<?php echo $i; ?>">
+                    <?php echo $i; ?>
+                </a>
+            </li>
+            <?php endfor; ?>
+
+            <li class="page-item <?php echo($page >= $totalPages) ? 'disabled' : ''; ?>">
+                <a class="page-link" href="/warehouse/batches?page=<?php echo min((int) $totalPages, (int) $page + 1); ?>">Sau</a>
+            </li>
+        </ul>
+    </nav>
+</div>
+<?php endif; ?>
 </div>
