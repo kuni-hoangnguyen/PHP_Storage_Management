@@ -218,7 +218,7 @@ final class QCController extends Controller
             LIMIT 1'
         );
         $boxesStmt  = $pdo->prepare('SELECT * FROM boxes WHERE batch_code = :batch_code ORDER BY box_code ASC');
-        $defectStmt = $pdo->query('SELECT * FROM defect_types');
+        $defectStmt = $pdo->query('SELECT * FROM defect_types WHERE is_active = 1 AND deleted_at IS NULL ORDER BY name ASC');
         $statusStmt = $pdo->prepare('UPDATE batches SET status = :status WHERE batch_code = :batch_code');
 
         $batchStmt->execute(['batch_code' => $batchCode]);
@@ -338,7 +338,7 @@ final class QCController extends Controller
             'SELECT d.name AS defect_name, dr.qty_units
             FROM defect_records dr
             JOIN defect_types d ON dr.defect_type_id = d.defect_type_id
-            WHERE dr.batch_code = :batch_code'
+            WHERE dr.batch_code = :batch_code' 
         );
         $batchStmt->execute(['batch_code' => $batchCode]);
         $batch   = $batchStmt->fetch();

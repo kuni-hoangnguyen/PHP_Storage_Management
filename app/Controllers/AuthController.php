@@ -24,7 +24,7 @@ final class AuthController extends Controller
         $stmt->execute(['username' => $username]);
         $user = $stmt->fetch();
 
-        if ($user && password_verify($password, $user['password_hash'])) {
+        if ($user && password_verify($password, $user['password_hash']) && $user['is_active'] === 1) {
             session_start();
             $_SESSION['user_id']  = $user['id'];
             $_SESSION['username'] = $user['username'];
@@ -49,9 +49,14 @@ final class AuthController extends Controller
             header('Location: ' . ($menuByRole[$_SESSION['role'] ?? ''][0][0] ?? '/'));
             exit;
         } else {
+            if ($user['is_active'] === 0) {
+                $error = 'Tài khoản đã bị vô hiệu hóa';
+            } else {
+                $error = 'Sai tên đăng nhập hoặc mật khẩu';
+            }
             $this->view('auth/login', [
                 'title' => 'Login',
-                'error' => 'Sai tên đăng nhập hoặc mật khẩu',
+                'error' => $error,
             ]);
         }
     }

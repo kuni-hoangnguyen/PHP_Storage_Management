@@ -52,6 +52,11 @@ body {
     border-color: rgba(21, 94, 99, 0.1);
 }
 
+.card-hover:hover {
+    background-color: rgba(21, 94, 99, 0.05);
+    transition: background-color 0.2s ease;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
     width: 8px;

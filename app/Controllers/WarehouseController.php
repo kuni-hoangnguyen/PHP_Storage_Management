@@ -18,8 +18,8 @@ final class WarehouseController extends Controller
     {
         $pdo = Database::getInstance();
 
-        $supplierStmt = $pdo->query('SELECT supplier_code, supplier_name FROM suppliers ORDER BY supplier_name ASC');
-        $productStmt  = $pdo->query('SELECT product_code, product_name FROM product_types ORDER BY product_name ASC');
+        $supplierStmt = $pdo->query('SELECT supplier_code, supplier_name FROM suppliers WHERE deleted_at IS NULL AND is_active = 1 ORDER BY supplier_name ASC');
+        $productStmt  = $pdo->query('SELECT product_code, product_name FROM product_types WHERE deleted_at IS NULL AND is_active = 1 ORDER BY product_name ASC');
 
         $suppliers     = $supplierStmt->fetchAll();
         $product_types = $productStmt->fetchAll();
